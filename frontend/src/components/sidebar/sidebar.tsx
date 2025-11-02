@@ -24,16 +24,29 @@ const colors = [
   "bg-red-500",
 ];
 
-const CheckBox = ({ label = "Check this box" }: { label?: string }) => {
-    const [isChecked, setIsChecked] = useState(true);
-    const [randomColor] = useState(colors[Math.floor(Math.random() * colors.length)]);
+const CheckBox = ({ 
+  label = "Check this box", 
+  color = colors[Math.floor(Math.random() * colors.length)],
+  isChecked = true,
+  onToggle
+}: { 
+  label?: string;
+  color?: string;
+  isChecked?: boolean;
+  onToggle?: () => void;
+}) => {
+    // Check if color is a hex code or Tailwind class
+    const isHexColor = color.startsWith('#');
     
     return (
         <div 
             className="flex items-center gap-2 cursor-pointer group"
-            onClick={() => setIsChecked(!isChecked)}
+            onClick={onToggle}
         >
-            <div className={`w-4 h-4 ${isChecked ? randomColor : "border border-gray-400"} rounded-sm flex items-center justify-center`}>
+            <div 
+                className={`w-4 h-4 rounded-sm flex items-center justify-center ${!isChecked ? "border border-gray-400" : ""} ${!isHexColor && isChecked ? color : ""}`}
+                style={isHexColor && isChecked ? { backgroundColor: color } : undefined}
+            >
                 {isChecked && <Check className="h-3 w-3 text-black" strokeWidth={3} />}
             </div>
             <span className="text-sm text-gray-300">{label}</span>
@@ -49,6 +62,8 @@ const SidebarComponent = () => {
     handlePrevMonth,
     handleNextMonth,
     handleDateClick,
+    calendars,
+    toggleCalendarVisibility,
   } = useCalendarStore();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -253,9 +268,20 @@ const SidebarComponent = () => {
                                   <span className="text-sm">My calendars</span>
                               </AccordionTrigger>
                               <AccordionContent className="pb-2 pt-1 px-6 flex flex-col gap-2">
-                                  {/* Calendar items would go here */}
-                                  <CheckBox />
-                                  <CheckBox />
+                                  {/* Dynamic Calendar items */}
+                                  {calendars.length === 0 ? (
+                                    <div className="text-xs text-gray-500">No calendars yet</div>
+                                  ) : (
+                                    calendars.map((calendar) => (
+                                      <CheckBox
+                                        key={calendar._id}
+                                        label={calendar.name}
+                                        color={calendar.color}
+                                        isChecked={calendar.isVisible}
+                                        onToggle={() => toggleCalendarVisibility(calendar._id!)}
+                                      />
+                                    ))
+                                  )}
                               </AccordionContent>
                           </AccordionItem>
                       </Accordion>
